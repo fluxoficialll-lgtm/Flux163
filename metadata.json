@@ -1,0 +1,9 @@
+{
+  "name": "1585 híbrido pronto pra quebrar",
+  "description": "A comprehensive authentication flow application including login, registration, password recovery, and profile completion with strict validation rules.\n",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

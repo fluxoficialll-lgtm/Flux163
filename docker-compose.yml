@@ -1,0 +1,78 @@
+
+version: '3.8'
+
+services:
+  # --- APLICAÇÃO PRINCIPAL (Node.js + React) ---
+  app:
+    build: .
+    container_name: flux_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_URL=${REDIS_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - APP_URL=${APP_URL}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - PAYMENT_API_URL=${PAYMENT_API_URL}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - flux_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # 1. Dados Relacionais (PostgreSQL)
+  postgres:
+    image: postgres:16-alpine
+    container_name: flux_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-flux_admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-flux_password_secure}
+      POSTGRES_DB: ${DB_NAME:-flux_core}
+    command: -c 'max_connections=200' -c 'shared_buffers=256MB'
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - flux_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  # 2. Cache e Sessões (Redis)
+  redis:
+    image: redis:alpine
+    container_name: flux_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    networks:
+      - flux_network
+
+networks:
+  flux_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
